@@ -4,6 +4,8 @@ using HeboTech.ATLib.Modems.D_LINK;
 using HeboTech.ATLib.Parsers;
 using System;
 using System.IO.Ports;
+using System.Linq;
+using System.Net.Sockets;
 using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.TestConsole
@@ -12,15 +14,20 @@ namespace HeboTech.ATLib.TestConsole
     {
         public static async Task Run(string port, string pin, string phoneNumber)
         {
-            using SerialPort serialPort = new SerialPort(port, 9600, Parity.None, 8, StopBits.One)
-            {
-                Handshake = Handshake.RequestToSend
-            };
-            Console.WriteLine("Opening serial port...");
-            serialPort.Open();
-            Console.WriteLine("Serialport opened");
+            //using SerialPort serialPort = new SerialPort(port, 9600, Parity.None, 8, StopBits.One)
+            //{
+            //    Handshake = Handshake.RequestToSend
+            //};
+            //Console.WriteLine("Opening serial port...");
+            //serialPort.Open();
+            //Console.WriteLine("Serialport opened");
+            //using AtChannel atChannel = new AtChannel(serialPort.BaseStream, serialPort.BaseStream);
 
-            using AtChannel atChannel = new AtChannel(serialPort.BaseStream, serialPort.BaseStream);
+            Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            socket.Connect("192.168.10.144", 2105);
+            NetworkStream stream = new NetworkStream(socket);
+            using AtChannel atChannel = new AtChannel(stream);
+
             using IModem modem = new DWM222(atChannel);
 
             modem.IncomingCall += Modem_IncomingCall;
@@ -76,6 +83,19 @@ namespace HeboTech.ATLib.TestConsole
                 var smsDeleteStatus = await modem.DeleteSmsAsync(sms.Index);
                 Console.WriteLine($"Delete SMS #{sms.Index} - {smsDeleteStatus}");
             }
+
+            var currentMessageStorage = await modem.GetPreferredMessageStorage();
+            foreach (var item in currentMessageStorage)
+            {
+                Console.WriteLine(item);
+            }
+            var newMessageStorage = await modem.SetPreferredMessageStorage(Storages.SIM);
+            foreach (var item in newMessageStorage)
+            {
+                Console.WriteLine(item);
+            }
+
+            var testDeleteSmsResult = await modem.TestDeleteSmsAsync();
 
             Console.WriteLine("Done. Press 'a' to answer call, 'h' to hang up, 's' to send SMS and 'q' to exit...");
             ConsoleKey key;

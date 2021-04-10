@@ -110,6 +110,88 @@ namespace HeboTech.ATLib.Modems.Generic
             return CommandStatus.ERROR;
         }
 
+        public virtual async Task<IList<MessageStorageStatus>> GetPreferredMessageStorage()
+        {
+            (AtError error, AtResponse response) = await channel.SendSingleLineCommandAsync("AT+CPMS?", "+CPMS:");
+            if (error == AtError.NO_ERROR)
+            {
+                string line = response.Intermediates.First();
+                var match = Regex.Match(line, @"\+CPMS:\s""(?<mem1>[A-Z]+)"",(?<used1>\d+),(?<total1>\d+),""(?<mem2>[A-Z]+)"",(?<used2>\d+),(?<total2>\d+),""(?<mem3>[A-Z]+)"",(?<used3>\d+),(?<total3>\d+)");
+                if (match.Success)
+                {
+                    string mem1 = match.Groups["mem1"].Value;
+                    int used1 = int.Parse(match.Groups["used1"].Value);
+                    int total1 = int.Parse(match.Groups["total1"].Value);
+
+                    string mem2 = match.Groups["mem2"].Value;
+                    int used2 = int.Parse(match.Groups["used2"].Value);
+                    int total2 = int.Parse(match.Groups["total2"].Value);
+
+                    string mem3 = match.Groups["mem3"].Value;
+                    int used3 = int.Parse(match.Groups["used3"].Value);
+                    int total3 = int.Parse(match.Groups["total3"].Value);
+
+                    List<MessageStorageStatus> statuses = new List<MessageStorageStatus>()
+                    {
+                        new MessageStorageStatus(mem1, used1, total1),
+                        new MessageStorageStatus(mem2, used2, total2),
+                        new MessageStorageStatus(mem3, used3, total3),
+                    };
+
+                    return statuses;
+                }
+            }
+            return null;
+        }
+
+        public virtual async Task<IList<MessageStorageStatus>> SetPreferredMessageStorage(string mem1, string mem2 = null, string mem3 = null)
+        {
+            if (mem1 == null)
+                throw new ArgumentNullException(nameof(mem1));
+            if (!(mem1 == Storages.FlashME || mem1 == Storages.FlashMT || mem1 == Storages.SIM || mem1 == Storages.StatusReport))
+                throw new ArgumentOutOfRangeException(nameof(mem1));
+            if (mem2 != null && !(mem2 == Storages.FlashME || mem2 == Storages.FlashMT || mem2 == Storages.SIM || mem2 == Storages.StatusReport))
+                throw new ArgumentOutOfRangeException(nameof(mem2));
+            if (mem3 != null && mem2 == null)
+                throw new ArgumentNullException(nameof(mem2));
+            if (mem3 != null && !(mem3 == Storages.FlashME || mem3 == Storages.FlashMT || mem3 == Storages.SIM || mem3 == Storages.StatusReport))
+                throw new ArgumentOutOfRangeException(nameof(mem3));
+
+            string command = $"AT+CPMS=\"{mem1}\"";
+            if (mem2 != null)
+                command += $",\"{mem2}\"";
+            if (mem3 != null)
+                command += $",\"{mem3}\"";
+            (AtError error, AtResponse response) = await channel.SendSingleLineCommandAsync(command, "+CPMS:");
+
+            if (error == AtError.NO_ERROR)
+            {
+                string line = response.Intermediates.First();
+                var match = Regex.Match(line, @"\+CPMS:\s(?<used1>\d+),(?<total1>\d+),(?<used2>\d+),(?<total2>\d+),(?<used3>\d+),(?<total3>\d+)");
+                if (match.Success)
+                {
+                    int used1 = int.Parse(match.Groups["used1"].Value);
+                    int total1 = int.Parse(match.Groups["total1"].Value);
+
+                    int used2 = int.Parse(match.Groups["used2"].Value);
+                    int total2 = int.Parse(match.Groups["total2"].Value);
+
+                    int used3 = int.Parse(match.Groups["used3"].Value);
+                    int total3 = int.Parse(match.Groups["total3"].Value);
+
+                    List<MessageStorageStatus> statuses = new List<MessageStorageStatus>()
+                    {
+                        new MessageStorageStatus("mem1", used1, total1),
+                        new MessageStorageStatus("mem2", used2, total2),
+                        new MessageStorageStatus("mem3", used3, total3),
+                    };
+
+                    return statuses;
+                }
+            }
+            return null;
+        }
+
         public virtual async Task<CommandStatus> SetNewSmsIndication(int mode, int mt, int bm, int ds, int bfr)
         {
             if (mode < 0 || mode > 2)
@@ -208,9 +290,38 @@ namespace HeboTech.ATLib.Modems.Generic
             return smss;
         }
 
-        public virtual async Task<CommandStatus> DeleteSmsAsync(int index)
+        public virtual async Task<SupportedDeleteSmsValues> TestDeleteSmsAsync()
         {
-            (AtError error, _) = await channel.SendCommand($"AT+CMGD={index}");
+            (AtError error, AtResponse response) = await channel.SendSingleLineCommandAsync("AT+CMGD=?", "+CMGD:");
+            if (error == AtError.NO_ERROR)
+            {
+                string line = response.Intermediates.First();
+                var match = Regex.Match(line, @"\+CMGD:\s\((?<indexes>)\),\((?<delflags>\d-\d)\)");
+                if (match.Success)
+                {
+                    IEnumerable<int> indexes;
+                    if (!string.IsNullOrWhiteSpace(match.Groups["indexes"].Value))
+                        indexes = match.Groups["indexes"].Value.Split(',').Select(x => int.Parse(x));
+                    else
+                        indexes = new List<int>();
+                    IEnumerable<int> delflagsRange = match.Groups["delflags"].Value.Split('-').Select(x => int.Parse(x));
+                    List<int> delFlags = new List<int>();
+                    for (int i = delflagsRange.First(); i <= delflagsRange.Last(); i++)
+                    {
+                        delFlags.Add(i);
+                    }
+                    return new SupportedDeleteSmsValues(indexes, delFlags);
+                }
+            }
+            return default;
+        }
+
+        public virtual async Task<CommandStatus> DeleteSmsAsync(int index, SmsDeleteFlags? smsDeleteFlag = null)
+        {
+            string command = $"AT+CMGD={index}";
+            if (smsDeleteFlag != null)
+                command += $",{(int)smsDeleteFlag}";
+            (AtError error, _) = await channel.SendCommand(command);
             if (error == AtError.NO_ERROR)
                 return CommandStatus.OK;
             return CommandStatus.ERROR;

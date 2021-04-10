@@ -14,7 +14,10 @@ namespace HeboTech.ATLib.Modems
 
         Task<CommandStatus> AnswerIncomingCallAsync();
         void Close();
-        Task<CommandStatus> DeleteSmsAsync(int index);
+        Task<CommandStatus> DeleteSmsAsync(int index, SmsDeleteFlags? smsDeleteFlag = null);
+        Task<SupportedDeleteSmsValues> TestDeleteSmsAsync();
+        Task<IList<MessageStorageStatus>> GetPreferredMessageStorage();
+        Task<IList<MessageStorageStatus>> SetPreferredMessageStorage(string mem1, string mem2 = null, string mem3 = null);
         Task<CommandStatus> DisableEchoAsync();
         Task<CommandStatus> EnterSimPinAsync(PersonalIdentificationNumber pin);
         Task<BatteryStatus> GetBatteryStatusAsync();
