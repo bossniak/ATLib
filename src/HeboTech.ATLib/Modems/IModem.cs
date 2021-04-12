@@ -26,8 +26,8 @@ namespace HeboTech.ATLib.Modems
         Task<SignalStrength> GetSignalStrengthAsync();
         Task<SimStatus> GetSimStatusAsync();
         Task<CallDetails> HangupAsync();
-        Task<IList<SmsWithIndex>> ListSmssAsync(SmsStatus smsStatus);
-        Task<Sms> ReadSmsAsync(int index);
+        Task<IList<SmsWithIndex>> ListSmssAsync(SmsStatus smsStatus, bool markAsRead);
+        Task<Sms> ReadSmsAsync(int index, bool markAsRead);
         Task<SmsReference> SendSmsAsync(PhoneNumber phoneNumber, string message);
         Task<CommandStatus> SetDateTimeAsync(DateTimeOffset value);
         Task<CommandStatus> SetNewSmsIndication(int mode, int mt, int bm, int ds, int bfr);

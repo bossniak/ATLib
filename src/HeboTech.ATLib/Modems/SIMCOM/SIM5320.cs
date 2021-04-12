@@ -40,7 +40,7 @@ namespace HeboTech.ATLib.Modems.SIMCOM
 
         #region _3GPP_TS_27_005
 
-        public override async Task<Sms> ReadSmsAsync(int index)
+        public override async Task<Sms> ReadSmsAsync(int index, bool markAsRead)
         {
             (AtError error, AtResponse response) = await channel.SendMultilineCommand($"AT+CMGR={index}", null);
 
@@ -67,7 +67,7 @@ namespace HeboTech.ATLib.Modems.SIMCOM
             return null;
         }
 
-        public override async Task<IList<SmsWithIndex>> ListSmssAsync(SmsStatus smsStatus)
+        public override async Task<IList<SmsWithIndex>> ListSmssAsync(SmsStatus smsStatus, bool markAsRead)
         {
             (AtError error, AtResponse response) = await channel.SendMultilineCommand($"AT+CMGL=\"{SmsStatusHelpers.ToString(smsStatus)}\"", null);
 

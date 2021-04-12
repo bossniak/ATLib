@@ -73,10 +73,10 @@ namespace HeboTech.ATLib.TestConsole
             var newSmsIndicationResult = await modem.SetNewSmsIndication(2, 1, 0, 0, 0);
             Console.WriteLine($"Setting new SMS indication: {newSmsIndicationResult}");
 
-            var singleSms = await modem.ReadSmsAsync(2);
+            var singleSms = await modem.ReadSmsAsync(2, true);
             Console.WriteLine($"Single SMS: {singleSms}");
 
-            var smss = await modem.ListSmssAsync(SmsStatus.ALL);
+            var smss = await modem.ListSmssAsync(SmsStatus.ALL, true);
             foreach (var sms in smss)
             {
                 Console.WriteLine($"SMS: {sms}");

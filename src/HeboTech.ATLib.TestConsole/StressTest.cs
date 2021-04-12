@@ -66,10 +66,10 @@ namespace HeboTech.ATLib.TestConsole
                 var smsTextFormatResult = await modem.SetSmsMessageFormatAsync(SmsTextFormat.Text);
                 Console.WriteLine($"Setting SMS text format: {smsTextFormatResult}");
 
-                var singleSms = await modem.ReadSmsAsync(5);
+                var singleSms = await modem.ReadSmsAsync(5, true);
                 Console.WriteLine($"Single SMS: {singleSms}");
 
-                var smss = await modem.ListSmssAsync(SmsStatus.ALL);
+                var smss = await modem.ListSmssAsync(SmsStatus.ALL, true);
                 foreach (var sms in smss)
                 {
                     Console.WriteLine($"SMS: {sms}");

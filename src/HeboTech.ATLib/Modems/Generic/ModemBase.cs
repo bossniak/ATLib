@@ -231,9 +231,9 @@ namespace HeboTech.ATLib.Modems.Generic
             return null;
         }
 
-        public virtual async Task<Sms> ReadSmsAsync(int index)
+        public virtual async Task<Sms> ReadSmsAsync(int index, bool markAsRead)
         {
-            (AtError error, AtResponse response) = await channel.SendMultilineCommand($"AT+CMGR={index},0", null);
+            (AtError error, AtResponse response) = await channel.SendMultilineCommand($"AT+CMGR={index},{(markAsRead ? 1 : 0)}", null);
 
             if (error == AtError.NO_ERROR && response.Intermediates.Count > 0)
             {
@@ -258,9 +258,9 @@ namespace HeboTech.ATLib.Modems.Generic
             return null;
         }
 
-        public virtual async Task<IList<SmsWithIndex>> ListSmssAsync(SmsStatus smsStatus)
+        public virtual async Task<IList<SmsWithIndex>> ListSmssAsync(SmsStatus smsStatus, bool markAsRead)
         {
-            (AtError error, AtResponse response) = await channel.SendMultilineCommand($"AT+CMGL=\"{SmsStatusHelpers.ToString(smsStatus)}\",0", null);
+            (AtError error, AtResponse response) = await channel.SendMultilineCommand($"AT+CMGL=\"{SmsStatusHelpers.ToString(smsStatus)}\",{(markAsRead ? 1 : 0)}", null);
 
             List<SmsWithIndex> smss = new List<SmsWithIndex>();
             if (error == AtError.NO_ERROR)
