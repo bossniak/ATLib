@@ -40,6 +40,24 @@ namespace HeboTech.ATLib.Modems.SIMCOM
 
         #region _3GPP_TS_27_005
 
+        public virtual async Task<SmsReference> SendSmsQuicklyAsync(PhoneNumber phoneNumber, string message)
+        {
+            string cmd1 = $"AT+CMGSO=\"{phoneNumber}\",{message}";
+            (AtError error, AtResponse response) = await channel.SendSingleLineCommandAsync(cmd1, "+CMGSO:");
+
+            if (error == AtError.NO_ERROR)
+            {
+                string line = response.Intermediates.First();
+                var match = Regex.Match(line, @"\+CMGSO:\s(?<mr>\d+)");
+                if (match.Success)
+                {
+                    int mr = int.Parse(match.Groups["mr"].Value);
+                    return new SmsReference(mr);
+                }
+            }
+            return null;
+        }
+
         public override async Task<Sms> ReadSmsAsync(int index, bool markAsRead)
         {
             (AtError error, AtResponse response) = await channel.SendMultilineCommand($"AT+CMGR={index}", null);

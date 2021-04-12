@@ -1,6 +1,7 @@
 ﻿using HeboTech.ATLib.DTOs;
 using HeboTech.ATLib.Modems;
 using HeboTech.ATLib.Modems.D_LINK;
+using HeboTech.ATLib.Modems.SIMCOM;
 using HeboTech.ATLib.Parsers;
 using System;
 using System.IO.Ports;
@@ -40,8 +41,16 @@ namespace HeboTech.ATLib.TestConsole
             Console.WriteLine($"SIM Status: {simStatus}");
 
             // SIMCOM SIM5320
-            //var remainingCodeAttemps = await modem.GetRemainingPinPukAttempts();
-            //Console.WriteLine($"Remaining attempts: {remainingCodeAttemps}");
+            {
+                if (modem is SIM5320 sim5320modem)
+                {
+                    var remainingCodeAttemps = await sim5320modem.GetRemainingPinPukAttemptsAsync();
+                    Console.WriteLine($"Remaining attempts: {remainingCodeAttemps}");
+
+                    //var quickSmsReference = await sim5320modem.SendSmsAsync(new PhoneNumber(phoneNumber), "Hello ATLib!");
+                    //Console.WriteLine($"Quick SMS reference: {quickSmsReference}");
+                }
+            }
 
             if (simStatus == SimStatus.SIM_PIN)
             {
